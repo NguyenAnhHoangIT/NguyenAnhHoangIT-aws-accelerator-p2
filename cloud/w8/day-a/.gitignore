@@ -1,0 +1,25 @@
+# Local .terraform directory (holds binary providers - huge in size)
+.terraform/
+
+# Sensitive variables files (contains master database password)
+*.tfvars
+*.tfvars.json
+
+# Local state files
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration files
+.terraformrc
+terraform.rc
