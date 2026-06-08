@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✦ Disc Player</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet">
+
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #06060f;
+            --border: rgba(255, 255, 255, 0.07);
+            --purple: #a259ff;
+            --pink: #f72585;
+            --green: #39ff88;
+            --text: #dde4f0;
+            --dim: rgba(221, 228, 240, 0.38);
+        }
+
+        /* ── PAGE ──────────────────────────────────────── */
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Orbitron', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Ambient orb */
+        body::before {
+            content: '';
+            position: fixed;
+            width: 700px;
+            height: 700px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(162, 89, 255, 0.07) 0%, transparent 65%);
+            pointer-events: none;
+        }
+
+        /* Scanlines */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(0deg,
+                    transparent 0px, transparent 3px,
+                    rgba(0, 0, 0, 0.04) 3px, rgba(0, 0, 0, 0.04) 4px);
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* ── VIDEO BACKGROUND ──────────────────────────── */
+        #video-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            z-index: 0;
+            pointer-events: none;
+            transition: opacity 1s ease;
+        }
+
+        #video-bg.visible {
+            opacity: 0.3;
+        }
+
+        /* ── PROGRESS BAR ─────────────────────────────── */
+        .progress-wrap {
+            width: 100%;
+            margin-bottom: 14px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--purple), var(--pink));
+            border-radius: 3px;
+            transition: width 0.1s linear;
+        }
+
+        .progress-time {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            color: var(--dim);
+            margin-top: 5px;
+            letter-spacing: 1px;
+        }
+
+        /* ── VOLUME ───────────────────────────────────── */
+        .volume-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .volume-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            color: var(--dim);
+            letter-spacing: 1px;
+            flex-shrink: 0;
+        }
+
+        .volume-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--purple);
+            box-shadow: 0 0 6px rgba(162, 89, 255, 0.6);
+            cursor: pointer;
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--purple);
+            box-shadow: 0 0 6px rgba(162, 89, 255, 0.6);
+            cursor: pointer;
+            border: none;
+        }
+
+        /* ── SCENE ─────────────────────────────────────── */
+        .scene {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 36px;
+            z-index: 1;
+        }
+
+        /* ── CD WRAPPER ────────────────────────────────── */
+        .cd-wrap {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* Pulsing halo */
+        .cd-halo {
+            position: absolute;
+            inset: -40px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(162, 89, 255, 0.22) 0%, transparent 70%);
+            filter: blur(18px);
+            opacity: 0;
+            transition: opacity 1.2s ease;
+            pointer-events: none;
+        }
+
+        .is-playing .cd-halo {
+            opacity: 1;
+            animation: halo-pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes halo-pulse {
+
+            0%,
+            100% {
+                opacity: .55;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.06);
+            }
+        }
+
+        /* The disc */
+        .cd-disc {
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            position: relative;
+            animation: spin 5s linear infinite;
+            animation-play-state: paused;
+            filter: brightness(.78) saturate(.9);
+            transition: filter .6s ease;
+            will-change: transform;
+        }
+
+        .is-playing .cd-disc {
+            animation-play-state: running;
+            filter: brightness(1) saturate(1.1);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Layer 1 – silver polycarbonate base */
+        .cd-base {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background:
+                radial-gradient(circle at 38% 32%,
+                    #e0e0e0 0%, #bbb 18%,
+                    #888 42%, #555 68%,
+                    #333 85%, #1c1c1c 100%);
+        }
+
+        /* Layer 2 – iridescent data ring (offset from edge) */
+        .cd-iris {
+            position: absolute;
+            inset: 13px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg,
+                    hsla(350, 100%, 65%, .9),
+                    hsla(28, 100%, 62%, .9),
+                    hsla(60, 100%, 60%, .9),
+                    hsla(125, 100%, 55%, .9),
+                    hsla(185, 100%, 58%, .9),
+                    hsla(225, 100%, 65%, .9),
+                    hsla(280, 100%, 68%, .9),
+                    hsla(325, 100%, 65%, .9),
+                    hsla(350, 100%, 65%, .9));
+            mix-blend-mode: screen;
+            opacity: .72;
+        }
+
+        /* Layer 3 – concentric groove texture */
+        .cd-grooves {
+            position: absolute;
+            inset: 13px;
+            border-radius: 50%;
+            background: repeating-radial-gradient(circle at 50% 50%,
+                    transparent 0, transparent 3.2px,
+                    rgba(0, 0, 0, .06) 3.2px, rgba(0, 0, 0, .06) 4px);
+        }
+
+        /* Layer 4 – specular highlight blob */
+        .cd-specular {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(ellipse at 34% 27%,
+                    rgba(255, 255, 255, .52) 0%,
+                    rgba(255, 255, 255, .12) 22%,
+                    transparent 52%);
+        }
+
+        /* Inner chrome ring separating data from label */
+        .cd-chrome-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 128px;
+            height: 128px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 35%,
+                    #d0d0d0, #999 40%, #555 80%, #222);
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, .6);
+        }
+
+        /* Label */
+        .cd-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 112px;
+            height: 112px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 38% 32%, #1b1b30, #09090f);
+            border: 1px solid rgba(162, 89, 255, .35);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            z-index: 5;
+        }
+
+        .label-brand {
+            font-size: 6.5px;
+            letter-spacing: 5px;
+            color: rgba(162, 89, 255, .8);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .label-icon {
+            font-size: 22px;
+            color: rgba(255, 255, 255, .6);
+            line-height: 1;
+        }
+
+        .label-sub {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 6px;
+            letter-spacing: 2px;
+            color: var(--dim);
+        }
+
+        /* Center spindle hole */
+        .cd-hole {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--bg);
+            border: 1px solid rgba(255, 255, 255, .12);
+            z-index: 10;
+        }
+
+        /* Hover overlay: show ▶ / ⏸ */
+        .cd-overlay {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0);
+            opacity: 0;
+            transition: opacity .2s, background .2s;
+            z-index: 20;
+        }
+
+        .cd-wrap:hover .cd-overlay {
+            opacity: 1;
+            background: rgba(0, 0, 0, .28);
+        }
+
+        .overlay-icon {
+            font-size: 46px;
+            color: #fff;
+            filter: drop-shadow(0 0 14px rgba(162, 89, 255, .9));
+            line-height: 1;
+        }
+
+        /* ── TRACK INFO ────────────────────────────────── */
+        .info {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-status {
+            font-size: 7.5px;
+            letter-spacing: 5px;
+            color: var(--dim);
+            text-transform: uppercase;
+        }
+
+        .info-title {
+            font-size: 12.5px;
+            font-weight: 600;
+            letter-spacing: .5px;
+            color: var(--text);
+            max-width: 340px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-height: 18px;
+        }
+
+        /* EQ bars */
+        .eq {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 22px;
+            opacity: 0;
+            transition: opacity .5s;
+        }
+
+        .is-playing .eq {
+            opacity: 1;
+        }
+
+        .eq-bar {
+            width: 3px;
+            border-radius: 2px;
+            background: linear-gradient(to top, var(--purple), var(--pink));
+            animation: eq-bounce 1.1s ease-in-out infinite;
+        }
+
+        .eq-bar:nth-child(1) {
+            animation-delay: .00s;
+        }
+
+        .eq-bar:nth-child(2) {
+            animation-delay: .13s;
+        }
+
+        .eq-bar:nth-child(3) {
+            animation-delay: .08s;
+        }
+
+        .eq-bar:nth-child(4) {
+            animation-delay: .22s;
+        }
+
+        .eq-bar:nth-child(5) {
+            animation-delay: .05s;
+        }
+
+        .eq-bar:nth-child(6) {
+            animation-delay: .17s;
+        }
+
+        .eq-bar:nth-child(7) {
+            animation-delay: .11s;
+        }
+
+        .eq-bar:nth-child(8) {
+            animation-delay: .26s;
+        }
+
+        @keyframes eq-bounce {
+
+            0%,
+            100% {
+                height: 3px;
+            }
+
+            50% {
+                height: 22px;
+            }
+        }
+
+        /* ── CONTROL PANEL ─────────────────────────────── */
+        .panel {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            background: rgba(9, 9, 20, .82);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 22px;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            min-width: 250px;
+            z-index: 100;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, .6);
+        }
+
+        .panel-header {
+            font-size: 7.5px;
+            letter-spacing: 4px;
+            color: var(--dim);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-header::before {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .select-wrap {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .select-wrap::after {
+            content: '▾';
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--purple);
+            pointer-events: none;
+            font-size: 13px;
+        }
+
+        select {
+            width: 100%;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 11px 38px 11px 14px;
+            border-radius: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: .5px;
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: border-color .2s;
+        }
+
+        select:hover,
+        select:focus {
+            border-color: rgba(162, 89, 255, .5);
+        }
+
+        select option {
+            background: #101020;
+            color: var(--text);
+        }
+
+        /* Play/Pause button */
+        .btn-play {
+            width: 100%;
+            background: linear-gradient(135deg, rgba(162, 89, 255, .18), rgba(247, 37, 133, .12));
+            border: 1px solid rgba(162, 89, 255, .3);
+            color: var(--text);
+            padding: 10px;
+            border-radius: 10px;
+            font-family: 'Orbitron', monospace;
+            font-size: 10px;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: background .2s, border-color .2s;
+            margin-bottom: 14px;
+        }
+
+        .btn-play:hover {
+            background: linear-gradient(135deg, rgba(162, 89, 255, .3), rgba(247, 37, 133, .2));
+            border-color: rgba(162, 89, 255, .6);
+        }
+
+        /* Status row */
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .15);
+            flex-shrink: 0;
+            transition: background .3s, box-shadow .3s;
+        }
+
+        .dot.live {
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+            animation: dot-blink 1.4s ease-in-out infinite;
+        }
+
+        .dot.paused {
+            background: #f5a623;
+            box-shadow: 0 0 6px #f5a623;
+        }
+
+        @keyframes dot-blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .45;
+            }
+        }
+
+        .status-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            color: var(--dim);
+        }
+
+        /* Arm decoration (cosmetic) */
+        .arm {
+            position: fixed;
+            top: 50%;
+            right: calc(50% - 220px);
+            transform: translateY(-90px);
+            width: 90px;
+            height: 3px;
+            background: linear-gradient(to right, transparent, rgba(162, 89, 255, .4), rgba(162, 89, 255, .7));
+            border-radius: 3px;
+            transform-origin: right center;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .arm::after {
+            content: '';
+            position: absolute;
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(162, 89, 255, .9), rgba(247, 37, 133, .6));
+            box-shadow: 0 0 10px rgba(162, 89, 255, .7);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Video background (30% opacity) -->
+    <video id="video-bg" muted></video>
+
+    <!-- Decorative arm -->
+    <div class="arm"></div>
+
+    <!-- ── Main scene ── -->
+    <div class="scene" id="scene">
+
+        <!-- CD -->
+        <div class="cd-wrap" id="cd-wrap" onclick="togglePlay()">
+            <div class="cd-halo"></div>
+            <div class="cd-disc" id="cd-disc">
+                <div class="cd-base"></div>
+                <div class="cd-iris"></div>
+                <div class="cd-grooves"></div>
+                <div class="cd-specular"></div>
+                <div class="cd-chrome-ring"></div>
+                <div class="cd-label">
+                    <span class="label-brand">Disc</span>
+                    <span class="label-icon">♪</span>
+                    <span class="label-sub">HI·FI</span>
+                </div>
+                <div class="cd-hole"></div>
+            </div>
+            <div class="cd-overlay">
+                <span class="overlay-icon" id="overlay-icon">▶</span>
+            </div>
+        </div>
+
+        <!-- Track info -->
+        <div class="info">
+            <div class="info-status" id="status-label">READY · CLICK DISC OR SELECT A TRACK</div>
+            <div class="info-title" id="track-title">— no track selected —</div>
+            <div class="eq">
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+            </div>
+        </div>
+
+    </div><!-- /scene -->
+
+    <!-- ── Control panel (bottom-right) ── -->
+    <div class="panel">
+        <div class="panel-header">SELECT TRACK</div>
+
+        <div class="select-wrap">
+            <select id="track-select" onchange="changeTrack(this.value)">
+                <option value="">— choose a track —</option>
+                <option value="assets/YTDown_YouTube_An-Do-Mixi-Na-Na-Na-Na-Anh-Do-Mixi_Media_PD61lIYrG-M_001_480p.mp4">♫ An Độ Mixi – Na Na Na Na</option>
+                <option value="assets/YTDown_YouTube_Rick-Astley-Never-Gonna-Give-You-Up-Offi_Media_dQw4w9WgXcQ_001_1080p.mp4">♫ Rick Astley – Never Gonna Give You Up</option>
+            </select>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="progress-wrap">
+            <div class="progress-bar-container" id="progress-bar" onclick="seekAudio(event)">
+                <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-time">
+                <span id="time-current">0:00</span>
+                <span id="time-total">0:00</span>
+            </div>
+        </div>
+
+        <!-- Volume -->
+        <div class="volume-wrap">
+            <span class="volume-label">VOL</span>
+            <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="80" oninput="setVolume(this.value)">
+        </div>
+
+        <button class="btn-play" onclick="togglePlay()">▶ / ⏸ &nbsp;PLAY · PAUSE</button>
+
+        <div class="status-row">
+            <div class="dot" id="dot"></div>
+            <span class="status-label" id="status-text">STOPPED</span>
+        </div>
+    </div>
+
+    <script>
+        /* ── Track list ────────────────────────────── */
+        var tracks = {
+            'assets/YTDown_YouTube_An-Do-Mixi-Na-Na-Na-Na-Anh-Do-Mixi_Media_PD61lIYrG-M_001_480p.mp4': 'An Độ Mixi – Na Na Na Na',
+            'assets/YTDown_YouTube_Rick-Astley-Never-Gonna-Give-You-Up-Offi_Media_dQw4w9WgXcQ_001_1080p.mp4': 'Rick Astley – Never Gonna Give You Up'
+        };
+
+        /* ── State ─────────────────────────────────── */
+        var player = document.getElementById('video-bg');
+        var isPlaying = false;
+        var selectedSrc = '';
+        var progressAnimFrame = null;
+
+        /* ── DOM refs ──────────────────────────────── */
+        var scene = document.getElementById('scene');
+        var dot = document.getElementById('dot');
+        var statusText = document.getElementById('status-text');
+        var statusLabel = document.getElementById('status-label');
+        var trackTitle = document.getElementById('track-title');
+        var overlayIcon = document.getElementById('overlay-icon');
+        var sel = document.getElementById('track-select');
+        var progressFill = document.getElementById('progress-fill');
+        var timeCurrent = document.getElementById('time-current');
+        var timeTotal = document.getElementById('time-total');
+
+        /* ── Audio event listeners ─────────────────── */
+        player.addEventListener('play', function () {
+            setUIPlaying(true);
+            statusLabel.textContent = 'NOW PLAYING';
+            player.classList.add('visible');
+            startProgressUpdate();
+        });
+
+        player.addEventListener('pause', function () {
+            setUIPlaying(false);
+            statusLabel.textContent = 'PAUSED';
+            statusText.textContent = 'PAUSED';
+            dot.className = 'dot paused';
+            stopProgressUpdate();
+        });
+
+        player.addEventListener('ended', function () {
+            setUIPlaying(false);
+            statusLabel.textContent = 'ENDED';
+            statusText.textContent = 'ENDED';
+            dot.className = 'dot';
+            player.classList.remove('visible');
+            stopProgressUpdate();
+            progressFill.style.width = '0%';
+            timeCurrent.textContent = '0:00';
+        });
+
+        player.addEventListener('loadedmetadata', function () {
+            timeTotal.textContent = formatTime(player.duration);
+        });
+
+        var pendingAutoplay = false;
+
+        player.addEventListener('canplay', function () {
+            if (pendingAutoplay) {
+                pendingAutoplay = false;
+                trackTitle.textContent = tracks[selectedSrc] || 'Unknown Track';
+                statusLabel.textContent = 'NOW PLAYING';
+                player.muted = false;
+                player.play();
+            }
+        });
+
+        player.addEventListener('error', function () {
+            statusLabel.textContent = 'ERROR LOADING FILE';
+            statusText.textContent = 'ERROR';
+            trackTitle.textContent = '— playback error —';
+        });
+
+        /* ── Progress bar update ───────────────────── */
+        function startProgressUpdate() {
+            stopProgressUpdate();
+            (function update() {
+                if (player.duration) {
+                    var pct = (player.currentTime / player.duration) * 100;
+                    progressFill.style.width = pct + '%';
+                    timeCurrent.textContent = formatTime(player.currentTime);
+                }
+                progressAnimFrame = requestAnimationFrame(update);
+            })();
+        }
+
+        function stopProgressUpdate() {
+            if (progressAnimFrame) {
+                cancelAnimationFrame(progressAnimFrame);
+                progressAnimFrame = null;
+            }
+        }
+
+        /* ── Seek ──────────────────────────────────── */
+        function seekAudio(e) {
+            if (!player.duration) return;
+            var bar = document.getElementById('progress-bar');
+            var rect = bar.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var pct = x / rect.width;
+            player.currentTime = pct * player.duration;
+        }
+
+        /* ── Volume ────────────────────────────────── */
+        player.volume = 0.8;
+
+        function setVolume(val) {
+            player.volume = val / 100;
+        }
+
+        /* ── Format time (m:ss) ────────────────────── */
+        function formatTime(sec) {
+            if (!sec || isNaN(sec)) return '0:00';
+            var m = Math.floor(sec / 60);
+            var s = Math.floor(sec % 60);
+            return m + ':' + (s < 10 ? '0' : '') + s;
+        }
+
+        /* ── UI helpers ────────────────────────────── */
+        function setUIPlaying(playing) {
+            isPlaying = playing;
+            if (playing) {
+                scene.classList.add('is-playing');
+                dot.className = 'dot live';
+                statusText.textContent = 'PLAYING';
+                overlayIcon.textContent = '⏸';
+            } else {
+                scene.classList.remove('is-playing');
+                overlayIcon.textContent = '▶';
+                if (!isPlaying) {
+                    dot.className = 'dot';
+                    statusText.textContent = 'STOPPED';
+                }
+            }
+        }
+
+        /* ── Toggle play / pause ───────────────────── */
+        function togglePlay() {
+            if (!selectedSrc) {
+                /* Flash dropdown if no track chosen */
+                sel.style.borderColor = 'rgba(247,37,133,.7)';
+                statusLabel.textContent = 'CHOOSE A TRACK FIRST ↓';
+                setTimeout(function () {
+                    sel.style.borderColor = '';
+                    statusLabel.textContent = 'READY · SELECT A TRACK';
+                }, 1500);
+                return;
+            }
+            if (isPlaying) {
+                player.pause();
+            } else {
+                player.play();
+            }
+        }
+
+        /* ── Change track ──────────────────────────── */
+        function changeTrack(src) {
+            if (!src) return;
+            selectedSrc = src;
+            trackTitle.textContent = 'Loading…';
+            statusLabel.textContent = 'LOADING';
+            progressFill.style.width = '0%';
+            timeCurrent.textContent = '0:00';
+            timeTotal.textContent = '0:00';
+            pendingAutoplay = true;
+            player.src = src;
+            player.load();
+        }
+
+        /* ── Auto-play first track on page load ────── */
+        window.addEventListener('DOMContentLoaded', function () {
+            var firstOption = sel.querySelector('option[value]:not([value=""])');
+            if (firstOption) {
+                sel.value = firstOption.value;
+                changeTrack(firstOption.value);
+            }
+        });
+    </script>
+</body>
+
+</html>
