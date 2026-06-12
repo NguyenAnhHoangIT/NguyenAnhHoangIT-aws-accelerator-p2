@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deploy Flow Diagram</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body class="p-8 w-[1600px] mx-auto min-h-screen flex flex-col justify-between">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-2xl font-extrabold uppercase tracking-tight text-slate-800">
+            DEPLOY FLOW - MINIKUBE KUBERNETES ON AWS USING TERRAFORM
+        </h1>
+        <p class="text-slate-500 font-medium text-sm mt-1">(Single-Node Minikube on EC2 behind Application Load Balancer)</p>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-11 gap-6 items-stretch">
+        <!-- 1. Operator / Local Machine -->
+        <div class="col-span-3 bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="flex items-center gap-2.5 mb-4">
+                    <span class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">1</span>
+                    <h2 class="font-bold text-slate-700 text-sm">Operator / Local Machine</h2>
+                </div>
+                
+                <div class="flex items-center gap-4 bg-slate-50 p-3.5 rounded-lg border border-slate-100 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold text-slate-700">DevOps Engineer</div>
+                        <div class="text-[10px] text-slate-500">Chạy script & quản lý IaC</div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 text-slate-100 p-4 rounded-lg font-mono text-[11px] space-y-1.5 mb-4 shadow-inner">
+                    <div class="text-slate-500"># Khởi tạo AWS & Key Pair</div>
+                    <div>cd terraform/</div>
+                    <div>terraform init</div>
+                    <div class="text-emerald-400">terraform apply -auto-approve</div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Local Source Code</div>
+                <div class="border border-slate-100 rounded-lg p-3 bg-slate-50/50 space-y-2 text-xs text-slate-600">
+                    <div class="flex items-center gap-2">📂 <span class="font-semibold text-slate-700">terraform/</span> (aws resources)</div>
+                    <div class="flex items-center gap-2">📄 <span class="font-semibold text-slate-700">index.html</span> (app code)</div>
+                    <div class="flex items-center gap-2">📂 <span class="font-semibold text-slate-700">assets/</span> (video files)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arrow 1 -> 2 -->
+        <div class="col-span-1 flex flex-col items-center justify-center">
+            <span class="text-xs font-bold text-slate-400 uppercase mb-2">Apply</span>
+            <svg class="w-12 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </div>
+
+        <!-- 2. Terraform Apply (AWS Infrastructure) -->
+        <div class="col-span-4 bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">2</span>
+                        <h2 class="font-bold text-slate-700 text-sm">Terraform Apply (AWS Cloud)</h2>
+                    </div>
+                    <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-orange-100 text-orange-600 border border-orange-200">ap-southeast-1</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Networking -->
+                    <div class="border border-slate-100 rounded-lg p-3 bg-slate-50/50 space-y-2.5">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Networking & Security</div>
+                        <div class="text-xs space-y-1.5">
+                            <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span><strong class="text-slate-700">VPC:</strong> 10.0.0.0/16</div>
+                            <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span><strong class="text-slate-700">Subnets:</strong> 2x Public (AZ1/AZ2)</div>
+                            <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span><strong class="text-slate-700">IGW:</strong> Internet Gateway</div>
+                            <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span><strong class="text-slate-700">ALB SG:</strong> HTTP (80) Ingress</div>
+                            <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span><strong class="text-slate-700">EC2 SG:</strong> Port 30080 from ALB</div>
+                        </div>
+                    </div>
+
+                    <!-- Compute & Storage -->
+                    <div class="border border-slate-100 rounded-lg p-3 bg-slate-50/50 space-y-2.5">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Compute & Storage</div>
+                        <div class="text-xs space-y-1.5">
+                            <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span><strong class="text-slate-700">EC2:</strong> t3.medium (Ubuntu)</div>
+                            <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span><strong class="text-slate-700">S3 Bucket:</strong> Private app assets</div>
+                            <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span><strong class="text-slate-700">ALB:</strong> HTTP Listener (80)</div>
+                            <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span><strong class="text-slate-700">IAM Role:</strong> S3 Bucket access</div>
+                            <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span><strong class="text-slate-700">Key Pair:</strong> TLS dynamic SSH key</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Provider Wiring note -->
+            <div class="mt-4 bg-cyan-50 border border-cyan-100 p-2.5 rounded-lg text-[10.5px] text-cyan-800 flex items-center gap-2">
+                <svg class="w-4 h-4 text-cyan-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span><strong>Multi-Provider Wiring:</strong> TLS provider tạo khóa SSH cục bộ và tự động gán vào cấu hình Instance Launch của AWS EC2.</span>
+            </div>
+        </div>
+
+        <!-- Arrow 2 -> 3 -->
+        <div class="col-span-1 flex flex-col items-center justify-center">
+            <span class="text-xs font-bold text-slate-400 uppercase mb-2">Bootstrap</span>
+            <svg class="w-12 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </div>
+
+        <!-- 3. EC2 Bootstrap & Deploy K8s -->
+        <div class="col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="flex items-center gap-2.5 mb-4">
+                    <span class="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">3</span>
+                    <h2 class="font-bold text-slate-700 text-sm">EC2 Bootstrap (User Data)</h2>
+                </div>
+
+                <!-- Steps Timeline -->
+                <div class="relative pl-4 border-l border-slate-200 space-y-4 text-[11px] text-slate-600">
+                    <div class="relative">
+                        <div class="absolute -left-[20.5px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-white"></div>
+                        <div class="font-semibold text-slate-800">1. Cài đặt các Package</div>
+                        <div class="text-[9.5px] text-slate-400">Docker.io, kubectl, minikube, socat</div>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[20.5px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-white"></div>
+                        <div class="font-semibold text-slate-800">2. Chạy Minikube</div>
+                        <div class="text-[9.5px] text-slate-400">Driver docker (2 vCPU, 3GB RAM)</div>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[20.5px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-white"></div>
+                        <div class="font-semibold text-slate-800">3. Pull Assets S3</div>
+                        <div class="text-[9.5px] text-slate-400">Tải index.html & videos về VM host</div>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[20.5px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-white"></div>
+                        <div class="font-semibold text-slate-800">4. Build & Deploy K8s</div>
+                        <div class="text-[9.5px] text-slate-400">Nginx container image, Deploy, SVC, HPA</div>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[20.5px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-white"></div>
+                        <div class="font-semibold text-slate-800">5. Socat Port-Forward</div>
+                        <div class="text-[9.5px] text-slate-400">Host port 30080 -> K8s Service IP:80</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Panels -->
+    <div class="grid grid-cols-12 gap-6 mt-8 pt-6 border-t border-slate-200">
+        <!-- Constraints -->
+        <div class="col-span-4 bg-red-50 border border-red-100 rounded-xl p-4 flex gap-3">
+            <div class="text-red-500 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <div>
+                <h3 class="text-xs font-bold text-red-800 uppercase tracking-wider mb-1">Ràng buộc Quan Trọng (Constraints)</h3>
+                <ul class="text-[11px] text-red-700 space-y-1.5 list-disc list-inside">
+                    <li><strong>Không có EKS:</strong> Chạy Kubernetes giả lập qua Minikube để tối ưu hóa chi phí học tập/lab.</li>
+                    <li><strong>Không có ALB K8s Controller:</strong> ALB là AWS ALB chung cho EC2, không chạy controller trong K8s.</li>
+                    <li><strong>Cầu nối mạng:</strong> Do IP của Minikube Service là nội bộ trong Docker, cần daemon Socat chuyển tiếp từ mạng Host (30080) vào K8s Service (80).</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Terraform Outputs -->
+        <div class="col-span-5 bg-slate-900 border border-slate-850 rounded-xl p-4 text-slate-200">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Kết quả đầu ra (Terraform Outputs)</h3>
+            <div class="grid grid-cols-2 gap-3 font-mono text-[10px]">
+                <div class="bg-slate-950 p-2 rounded border border-slate-800">
+                    <span class="text-slate-500 block">alb_dns_name (Endpoint chính)</span>
+                    <span class="text-blue-400 break-all">disc-player-alb-123456789.ap-southeast-1.elb.amazonaws.com</span>
+                </div>
+                <div class="bg-slate-950 p-2 rounded border border-slate-800">
+                    <span class="text-slate-500 block">ec2_public_ip (Dùng debug SSH)</span>
+                    <span class="text-emerald-400">18.139.42.105</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="col-span-3 bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between">
+            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Chú thích (Legend)</h3>
+            <div class="space-y-2 text-[11px] text-slate-500">
+                <div class="flex items-center gap-2">
+                    <span class="w-8 h-0.5 bg-blue-500 block"></span>
+                    <span>Luồng cấu hình (Provisioning / Apply Flow)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-8 h-0.5 border-t border-dashed border-emerald-500 block"></span>
+                    <span>Quy trình khởi tạo VM (Bootstrap Flow)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded bg-orange-500/10 border border-orange-500/30 block"></span>
+                    <span>Tài nguyên được quản lý bởi AWS</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

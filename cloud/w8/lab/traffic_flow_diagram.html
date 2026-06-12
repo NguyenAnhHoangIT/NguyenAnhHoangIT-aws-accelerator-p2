@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Runtime Traffic Flow Diagram</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body class="p-8 w-[1600px] mx-auto min-h-screen flex flex-col justify-between">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-2xl font-extrabold uppercase tracking-tight text-slate-800">
+            RUNTIME ARCHITECTURE - TRAFFIC FLOW
+        </h1>
+        <p class="text-slate-500 font-medium text-sm mt-1">(HTTP Request Routing from Client Browser to Kubernetes Pod via AWS ALB & Socat)</p>
+    </div>
+
+    <!-- Diagram Architecture Box -->
+    <div class="bg-white border border-slate-200 rounded-xl p-8 shadow-sm flex flex-col justify-between relative mb-6">
+        
+        <!-- AWS Cloud Container -->
+        <div class="border-2 border-dashed border-orange-300 rounded-2xl p-6 bg-orange-50/20 relative">
+            <div class="absolute -top-3 left-6 bg-orange-500 text-white font-bold text-[10px] px-2.5 py-0.5 rounded shadow-sm">
+                AWS CLOUD BOUNDARY (ap-southeast-1)
+            </div>
+
+            <!-- Flow Flex Row -->
+            <div class="flex flex-col lg:flex-row justify-between items-center gap-6 py-6">
+                
+                <!-- 1. Client / User Browser (Outside AWS, but positioned on left) -->
+                <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm text-center w-40 shrink-0 z-10">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mx-auto mb-2.5">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </div>
+                    <span class="text-xs font-bold block text-slate-700">Client / Browser</span>
+                    <span class="text-[10px] text-slate-400 block mt-1">Gửi HTTP Request</span>
+                    <span class="inline-block mt-2 px-2 py-0.5 bg-blue-100 text-blue-700 font-bold text-[9px] rounded">Port 80 (HTTP)</span>
+                </div>
+
+                <!-- Connection Arrow 1 -->
+                <div class="text-center shrink-0">
+                    <div class="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded mb-1">1. ALB DNS</div>
+                    <svg class="w-10 h-6 text-slate-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                </div>
+
+                <!-- 2. Application Load Balancer -->
+                <div class="bg-white border border-orange-200 p-4 rounded-xl shadow-sm text-center w-44 shrink-0 z-10">
+                    <div class="w-12 h-12 bg-orange-50 text-orange-500 rounded-lg flex items-center justify-center mx-auto mb-2.5">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                    </div>
+                    <span class="text-xs font-bold block text-slate-700">AWS ALB</span>
+                    <span class="text-[10px] text-slate-400 block mt-1">Drop invalid headers</span>
+                    <span class="inline-block mt-2 px-2 py-0.5 bg-orange-100 text-orange-700 font-bold text-[9px] rounded">Port 80 -> Target 30080</span>
+                </div>
+
+                <!-- Connection Arrow 2 -->
+                <div class="text-center shrink-0">
+                    <div class="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded mb-1">2. Target Group</div>
+                    <svg class="w-10 h-6 text-slate-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                </div>
+
+                <!-- 3. EC2 Host & Socat (Compute Layer) -->
+                <div class="bg-white border border-emerald-200 p-4 rounded-xl shadow-sm text-center w-48 shrink-0 z-10">
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center mx-auto mb-2.5">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+                    </div>
+                    <span class="text-xs font-bold block text-slate-700">EC2 Instance (Minikube Host)</span>
+                    <span class="text-[10px] text-slate-400 block mt-1">Socat Port-Forwarding Daemon</span>
+                    <span class="inline-block mt-2 px-2 py-0.5 bg-emerald-100 text-emerald-700 font-bold text-[9px] rounded">Port 30080 -> LB IP:80</span>
+                </div>
+
+                <!-- Connection Arrow 3 -->
+                <div class="text-center shrink-0">
+                    <div class="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded mb-1">3. local-forward</div>
+                    <svg class="w-10 h-6 text-slate-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                </div>
+
+                <!-- 4. Self-Managed Kubernetes Cluster Container -->
+                <div class="border-2 border-blue-200 rounded-xl p-4 bg-blue-50/20 flex flex-col md:flex-row gap-5 items-center justify-between shrink-0">
+                    
+                    <!-- K8s Service -->
+                    <div class="bg-white border border-blue-200 p-3.5 rounded-lg shadow-sm text-center w-36">
+                        <div class="text-blue-500 font-bold text-[10px] uppercase mb-1">Service (K8s)</div>
+                        <span class="text-xs font-bold block text-slate-700">disc-player</span>
+                        <span class="text-[9px] text-slate-400 block mt-0.5">Type: LoadBalancer</span>
+                        <span class="inline-block mt-2 px-2 py-0.5 bg-blue-100 text-blue-700 font-bold text-[8.5px] rounded">Port 80</span>
+                    </div>
+
+                    <!-- Routing arrow inside cluster -->
+                    <div class="text-slate-400 font-bold text-xs shrink-0">▶</div>
+
+                    <!-- K8s Pod (Nginx Web Server) -->
+                    <div class="bg-white border border-purple-200 p-3.5 rounded-lg shadow-sm text-center w-40 relative">
+                        <div class="text-purple-500 font-bold text-[10px] uppercase mb-1">Pod (Replicas)</div>
+                        <span class="text-xs font-bold block text-slate-700">disc-player-xxxxx</span>
+                        <span class="text-[9.5px] text-slate-400 block mt-0.5">Nginx: Alpine Web Server</span>
+                        <span class="inline-block mt-2 px-2 py-0.5 bg-purple-100 text-purple-700 font-bold text-[8.5px] rounded">Container Port 80</span>
+
+                        <!-- Auto-scaling Indicator -->
+                        <div class="absolute -bottom-2.5 right-2 bg-purple-600 text-white font-bold text-[8px] px-1.5 py-0.5 rounded shadow-sm">
+                            HPA: 1-5 Pods
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Panels at the bottom -->
+    <div class="grid grid-cols-12 gap-6">
+        
+        <!-- Flow Summary Steps -->
+        <div class="col-span-5 bg-white border border-slate-200 rounded-xl p-4">
+            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">Tóm tắt luồng đi của request (Flow Summary)</h3>
+            <ol class="text-[11px] text-slate-600 space-y-2 list-decimal list-inside">
+                <li><strong class="text-slate-700">Request:</strong> Client truy cập domain của ALB trên Internet qua cổng HTTP 80.</li>
+                <li><strong class="text-slate-700">ALB Routing:</strong> ALB nhận và chuyển tiếp request đến Target Group trên cổng 30080 của EC2.</li>
+                <li><strong class="text-slate-700">Host Listening:</strong> Tiến trình <code>socat</code> trên EC2 đón gói tin trên cổng 30080.</li>
+                <li><strong class="text-slate-700">K8s Forwarding:</strong> <code>socat</code> chuyển hướng gói tin vào IP LoadBalancer của Minikube.</li>
+                <li><strong class="text-slate-700">Pod Response:</strong> Kube-proxy định tuyến đến Pod <code>disc-player</code>, Nginx trả về assets và stream video.</li>
+            </ol>
+        </div>
+
+        <!-- Security Highlights -->
+        <div class="col-span-4 bg-emerald-50/50 border border-emerald-100 rounded-xl p-4">
+            <h3 class="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2.5">Điểm nhấn bảo mật (Security Highlights)</h3>
+            <ul class="text-[11px] text-emerald-700 space-y-2 list-disc list-inside">
+                <li><strong>Network Firewall:</strong> EC2 chỉ nhận traffic từ ALB Security Group trên cổng 30080. Không thể bypass để hack trực tiếp EC2.</li>
+                <li><strong>ALB Hardening:</strong> ALB lọc và bỏ qua các header HTTP bị lỗi để chống tấn công HTTP Smuggling.</li>
+                <li><strong>No Access Keys:</strong> Dữ liệu video tĩnh được tải từ S3 Bucket bằng IAM Instance Profile động, không lưu AWS credentials trên máy.</li>
+            </ul>
+        </div>
+
+        <!-- Legend -->
+        <div class="col-span-3 bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between">
+            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Chú thích (Legend)</h3>
+            <div class="space-y-2 text-[11px] text-slate-500">
+                <div class="flex items-center gap-2">
+                    <span class="w-8 h-0.5 bg-blue-500 block"></span>
+                    <span>Lưu lượng truy cập chính (Primary Request Flow)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded bg-orange-500/10 border border-orange-500/30 block"></span>
+                    <span>Tài nguyên AWS nằm trong VPC</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded bg-blue-500/10 border border-blue-500/30 block"></span>
+                    <span>Thành phần trong K8s Cluster</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
